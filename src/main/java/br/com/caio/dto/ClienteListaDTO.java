@@ -4,7 +4,16 @@ public class ClienteListaDTO {
 
 	private Long id;
 	private String nome;
+
+	public ClienteListaDTO() {
+		super();
+	}
 	
+	public ClienteListaDTO(Long id, String nome) {
+		super();
+		this.id = id;
+		this.nome = nome;
+	}
 	public Long getId() {
 		return id;
 	}
