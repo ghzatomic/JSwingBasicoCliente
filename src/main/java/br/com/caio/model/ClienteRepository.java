@@ -11,7 +11,7 @@ public class ClienteRepository implements ClienteRepositoryInterface {
 	 * @see br.com.caio.service.ClienteServiceInterface#salvar(br.com.caio.dto.ClienteDTO)
 	 */
 	public void salvar(ClienteDTO dto) {
-
+		System.out.println("AQUI");
 	}
 
 	/* (non-Javadoc)

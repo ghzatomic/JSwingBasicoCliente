@@ -12,10 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClienteDAO {
-    private String jdbcURL;
-    private String jdbcUsername;
-    private String jdbcPassword;
-    private Connection jdbcConnection;
+    private ConnectionFactory conexaoComBanco;
 
 
     /**
@@ -26,61 +23,40 @@ public class ClienteDAO {
      PRIMARY KEY (`id`),
      UNIQUE KEY `cliente_id_UNIQUE` (`id`)
      ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1
+     * @throws Exception 
 
      */
 
-    public ClienteDAO(String jdbcURL, String jdbcUsername, String jdbcPassword) {
-        this.jdbcURL = jdbcURL;
-        this.jdbcUsername = jdbcUsername;
-        this.jdbcPassword = jdbcPassword;
+    public ClienteDAO(ConnectionFactory conexaoComBanco) throws Exception {
+    	this.conexaoComBanco = conexaoComBanco;
+    	if (!conexaoComBanco.isConectado()){
+    		conexaoComBanco.connect();
+    	}
     }
 
     public static void main(String[] args) throws Exception {
-        ClienteDAO cliente = new ClienteDAO("jdbc:mysql://localhost:3306/teste_cliente","root","123");
-        cliente.connect();
-        cliente.update(new ClienteDTO(11L,"CAIO"));
-        cliente.disconnect();
+    	ConnectionFactory conexao = new ConnectionFactory("jdbc:mysql://localhost:3306/caio_cliente?useTimezone=true&serverTimezone=UTC","root","1234");
+    	conexao.connect();
+        ClienteDAO cliente = new ClienteDAO(conexao);
+        cliente.insert(new ClienteDTO(null,"CAIO"));
+        conexao.disconnect();
     }
 
-    protected void connect() throws SQLException {
-        if (jdbcConnection == null || jdbcConnection.isClosed()) {
-            try {
-                Class.forName("com.mysql.jdbc.Driver");
-            } catch (ClassNotFoundException e) {
-                throw new SQLException(e);
-            }
-            jdbcConnection = DriverManager.getConnection(
-                    jdbcURL, jdbcUsername, jdbcPassword);
-        }
-    }
-
-    protected void disconnect() throws SQLException {
-        if (jdbcConnection != null && !jdbcConnection.isClosed()) {
-            jdbcConnection.close();
-        }
-    }
-
-    public boolean insert(ClienteDTO cliente) throws SQLException {
+    public boolean insert(ClienteDTO cliente) throws Exception {
         String sql = "INSERT INTO cliente (nome) VALUES (?)";
-        connect();
-
-        PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+        PreparedStatement statement = conexaoComBanco.getConexao().prepareStatement(sql);
         statement.setString(1, cliente.getNome());
 
         boolean rowInserted = statement.executeUpdate() > 0;
         statement.close();
-        disconnect();
         return rowInserted;
     }
 
-    public List<ClienteDTO> listAll() throws SQLException {
+    public List<ClienteDTO> listAll() throws Exception {
         List<ClienteDTO> listRet = new ArrayList<>();
 
         String sql = "SELECT * FROM cliente";
-
-        connect();
-
-        Statement statement = jdbcConnection.createStatement();
+        Statement statement = conexaoComBanco.getConexao().createStatement();
         ResultSet resultSet = statement.executeQuery(sql);
 
         while (resultSet.next()) {
@@ -97,47 +73,38 @@ public class ClienteDAO {
         resultSet.close();
         statement.close();
 
-        disconnect();
-
         return listRet;
     }
 
-    public boolean deleteBook(ClienteDTO clienteDTO) throws SQLException {
+    public boolean deleteBook(ClienteDTO clienteDTO) throws Exception {
         String sql = "DELETE FROM cliente where id = ?";
 
-        connect();
-
-        PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+        PreparedStatement statement = conexaoComBanco.getConexao().prepareStatement(sql);
         statement.setLong(1, clienteDTO.getId());
 
         boolean rowDeleted = statement.executeUpdate() > 0;
         statement.close();
-        disconnect();
         return rowDeleted;
     }
 
-    public boolean update(ClienteDTO clienteDTO) throws SQLException {
+    public boolean update(ClienteDTO clienteDTO) throws Exception {
         String sql = "UPDATE cliente SET nome = ?";
         sql += " WHERE id = ?";
-        connect();
 
-        PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+        PreparedStatement statement = conexaoComBanco.getConexao().prepareStatement(sql);
         statement.setString(1, clienteDTO.getNome());
         statement.setLong(2, clienteDTO.getId());
 
         boolean rowUpdated = statement.executeUpdate() > 0;
         statement.close();
-        disconnect();
         return rowUpdated;
     }
 
-    public ClienteDTO getCliente(Long id) throws SQLException {
+    public ClienteDTO getCliente(Long id) throws Exception {
         ClienteDTO clienteDTO = null;
         String sql = "SELECT * FROM cliente WHERE id = ?";
 
-        connect();
-
-        PreparedStatement statement = jdbcConnection.prepareStatement(sql);
+        PreparedStatement statement = conexaoComBanco.getConexao().prepareStatement(sql);
         statement.setLong(1, id);
 
         ResultSet resultSet = statement.executeQuery();
